@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "astra-toolchain"
+version = "0.1.0"
+description = "Manage multiple Yocto toolchains for Synaptics Astra devices in Docker containers"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+dependencies = []
+
+[project.scripts]
+astra-toolchain = "astra_toolchain.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+astra_toolchain = ["resources/*"]
