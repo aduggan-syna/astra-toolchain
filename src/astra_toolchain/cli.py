@@ -73,6 +73,7 @@ def cmd_build(args) -> int:
         name=name,
         base_image=args.base_image,
         no_cache=args.no_cache,
+        platform_name=args.platform or docker.default_platform(),
     )
     print("Built {}".format(name))
     return 0
@@ -96,7 +97,12 @@ def _resolve_name(args) -> str:
 
 def cmd_run(args) -> int:
     name = _resolve_name(args)
-    return docker.run_shell(name, args.workdir, args.command or None)
+    return docker.run_shell(
+        name,
+        args.workdir,
+        args.command or None,
+        platform_name=args.platform or docker.default_platform(),
+    )
 
 
 def cmd_list(args) -> int:
@@ -163,6 +169,10 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--cache", default=DEFAULT_CACHE, help="download cache directory")
     build.add_argument("--name", help="override the Docker image name")
     build.add_argument("--base-image", default="ubuntu:22.04", help="container base image")
+    build.add_argument(
+        "--platform",
+        help="container platform (default: linux/amd64 on non-x86_64 hosts)",
+    )
     build.add_argument("--no-cache", action="store_true", help="pass --no-cache to docker build")
     build.add_argument("--force", action="store_true", help="rebuild even if the image exists")
     build.set_defaults(func=cmd_build)
@@ -171,6 +181,10 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("name", nargs="?", help="toolchain container name")
     _add_selectors(run)
     run.add_argument("-w", "--workdir", default=os.getcwd(), help="host directory to mount")
+    run.add_argument(
+        "--platform",
+        help="container platform (default: linux/amd64 on non-x86_64 hosts)",
+    )
     run.add_argument("command", nargs=argparse.REMAINDER, help="command to run instead of a shell")
     run.set_defaults(func=cmd_run)
 

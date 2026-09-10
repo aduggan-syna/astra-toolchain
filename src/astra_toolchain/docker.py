@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import getpass
 import os
+import platform
 import re
 import shutil
 import subprocess
@@ -16,6 +17,8 @@ from astra_toolchain.naming import ToolchainSpec
 RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources")
 LABEL = "org.synaptics.astra.toolchain=1"
 NAME_PREFIX = "astra-"
+# The Astra toolchains are x86_64 Linux binaries.
+TOOLCHAIN_PLATFORM = "linux/amd64"
 
 
 class DockerError(RuntimeError):
@@ -58,6 +61,13 @@ def container_user() -> str:
     return name or "astra"
 
 
+def default_platform() -> Optional[str]:
+    """Emulate x86_64 on hosts that are not x86_64, such as Apple Silicon."""
+    if platform.machine().lower() in ("x86_64", "amd64"):
+        return None
+    return TOOLCHAIN_PLATFORM
+
+
 def build_image(
     spec: ToolchainSpec,
     installer_path: str,
@@ -65,6 +75,7 @@ def build_image(
     base_image: str = "ubuntu:22.04",
     toolchain_dir: str = "/opt/astra/toolchain",
     no_cache: bool = False,
+    platform_name: Optional[str] = None,
 ) -> str:
     """Build the toolchain container image and return its name."""
     name = name or spec.docker_name
@@ -103,6 +114,8 @@ def build_image(
         ]
         if no_cache:
             args.append("--no-cache")
+        if platform_name:
+            args += ["--platform", platform_name]
         args.append(context)
         _check(args)
     finally:
@@ -115,6 +128,7 @@ def run_shell(
     workdir: str,
     command: Optional[List[str]] = None,
     extra_args: Optional[List[str]] = None,
+    platform_name: Optional[str] = None,
 ) -> int:
     """Open a shell (or run a command) in the container for ``name``."""
     if not image_exists(name):
@@ -141,6 +155,8 @@ def run_shell(
         "-w",
         "/workspace",
     ]
+    if platform_name:
+        args += ["--platform", platform_name]
     if extra_args:
         args += extra_args
     args.append(name)

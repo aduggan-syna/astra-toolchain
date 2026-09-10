@@ -77,3 +77,6 @@ they have on the host. The user has passwordless `sudo` inside the container.
 - Set `GITHUB_TOKEN` if you hit GitHub API rate limits.
 - Large toolchains are published as split assets; the checksum published by the
   SDK release is verified after the parts are joined.
+- The toolchains are x86_64 Linux binaries. On non-x86_64 hosts (Apple Silicon)
+  the containers are built and run as `linux/amd64` under emulation; override
+  with `--platform`.
