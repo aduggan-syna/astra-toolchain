@@ -22,6 +22,10 @@ _INSTALLER_RE = re.compile(
 # "poky-glibc-aarch64-...-toolchain-5.0.9.sh" with no machine prefix).
 _ARCH_RE = re.compile(r"-glibc-(?P<arch>x86_64|aarch64|arm64)-")
 
+# The Yocto MACHINE is always the token immediately before "-toolchain-<version>",
+# even on installers without the full "<machine>_<image>_<codename>-poky-..." prefix.
+_MACHINE_RE = re.compile(r"-(?P<machine>[A-Za-z0-9]+)-toolchain-[0-9]")
+
 # get_sl1680_oobe_scarthgap_6.12_v2.5.0_toolchain.sh
 _WRAPPER_RE = re.compile(r"^get_(?P<prefix>.+)_toolchain\.sh$")
 
@@ -119,3 +123,9 @@ def detect_host_arch(filename: str) -> Optional[str]:
         return None
     arch = match.group("arch")
     return "aarch64" if arch == "arm64" else arch
+
+
+def detect_machine(filename: str) -> Optional[str]:
+    """Best-effort detection of the Yocto MACHINE from an installer filename."""
+    match = _MACHINE_RE.search(filename)
+    return match.group("machine") if match else None
