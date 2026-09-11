@@ -17,6 +17,11 @@ _INSTALLER_RE = re.compile(
     r"^(?P<prefix>.+?)-poky-glibc-(?P<host_arch>x86_64|aarch64|arm64)-.+-toolchain-(?P<version>[0-9][0-9.]*)\.sh$"
 )
 
+# Looser match used as a fallback to detect the build-host arch of installers
+# that don't otherwise follow the naming convention (e.g. a bare
+# "poky-glibc-aarch64-...-toolchain-5.0.9.sh" with no machine prefix).
+_ARCH_RE = re.compile(r"-glibc-(?P<arch>x86_64|aarch64|arm64)-")
+
 # get_sl1680_oobe_scarthgap_6.12_v2.5.0_toolchain.sh
 _WRAPPER_RE = re.compile(r"^get_(?P<prefix>.+)_toolchain\.sh$")
 
@@ -105,3 +110,12 @@ def parse_asset(name: str, release: Optional[str] = None) -> Optional[ToolchainS
             codename=codename,
         )
     return None
+
+
+def detect_host_arch(filename: str) -> Optional[str]:
+    """Best-effort detection of the build-host arch from an installer filename."""
+    match = _ARCH_RE.search(filename)
+    if not match:
+        return None
+    arch = match.group("arch")
+    return "aarch64" if arch == "arm64" else arch

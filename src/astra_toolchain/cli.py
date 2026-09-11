@@ -9,7 +9,7 @@ import sys
 from typing import List, Optional
 
 from astra_toolchain import __version__, docker, releases
-from astra_toolchain.naming import DEFAULT_IMAGE, ToolchainSpec, parse_asset
+from astra_toolchain.naming import DEFAULT_IMAGE, ToolchainSpec, detect_host_arch, parse_asset
 
 DEFAULT_CACHE = os.path.join(
     os.environ.get("XDG_CACHE_HOME", os.path.expanduser("~/.cache")), "astra-toolchain"
@@ -40,7 +40,10 @@ def _resolve_installer(args):
         if not os.path.isfile(path):
             raise SystemExit("error: no such toolchain installer: {}".format(path))
         spec = parse_asset(os.path.basename(path))
-        return path, _spec_from_args(args, spec)
+        spec = _spec_from_args(args, spec)
+        if spec.host_arch is None:
+            spec = dataclasses.replace(spec, host_arch=detect_host_arch(os.path.basename(path)))
+        return path, spec
 
     local = releases.find_local_installer(args.dir, args.machine, args.image)
     if local is not None:
