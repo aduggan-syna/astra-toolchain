@@ -183,7 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--dir", default=os.getcwd(), help="directory to search for an installer")
     build.add_argument("--cache", default=DEFAULT_CACHE, help="download cache directory")
     build.add_argument("--name", help="override the Docker image name")
-    build.add_argument("--base-image", default="ubuntu:22.04", help="container base image")
+    build.add_argument("--base-image", default="ubuntu:24.04", help="container base image")
     build.add_argument(
         "--platform",
         help="container platform (default: linux/amd64 on non-x86_64 hosts)",

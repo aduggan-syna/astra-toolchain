@@ -82,7 +82,7 @@ def build_image(
     spec: ToolchainSpec,
     installer_path: str,
     name: Optional[str] = None,
-    base_image: str = "ubuntu:22.04",
+    base_image: str = "ubuntu:24.04",
     toolchain_dir: str = "/opt/astra/toolchain",
     no_cache: bool = False,
     platform_name: Optional[str] = None,
