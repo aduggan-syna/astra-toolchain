@@ -12,8 +12,9 @@ CODENAMES = ("scarthgap", "kirkstone", "nanbield", "mickledore", "langdale", "du
 DEFAULT_IMAGE = "default"
 
 # sl1680_oobe_scarthgap-poky-glibc-x86_64-astra-media-oobe-cortexa73-sl1680-toolchain-5.0.9.sh
+# Custom-built toolchains may instead target an aarch64 build host.
 _INSTALLER_RE = re.compile(
-    r"^(?P<prefix>.+?)-poky-glibc-x86_64-.+-toolchain-(?P<version>[0-9][0-9.]*)\.sh$"
+    r"^(?P<prefix>.+?)-poky-glibc-(?P<host_arch>x86_64|aarch64|arm64)-.+-toolchain-(?P<version>[0-9][0-9.]*)\.sh$"
 )
 
 # get_sl1680_oobe_scarthgap_6.12_v2.5.0_toolchain.sh
@@ -30,6 +31,8 @@ class ToolchainSpec:
     codename: Optional[str] = None
     version: Optional[str] = None
     installer: Optional[str] = None
+    # Build-host architecture the installer targets, e.g. "x86_64" or "aarch64".
+    host_arch: Optional[str] = None
 
     @property
     def docker_name(self) -> str:
@@ -89,6 +92,7 @@ def parse_asset(name: str, release: Optional[str] = None) -> Optional[ToolchainS
             codename=codename,
             version=match.group("version"),
             installer=name,
+            host_arch=match.group("host_arch").replace("arm64", "aarch64"),
         )
 
     match = _WRAPPER_RE.match(name)

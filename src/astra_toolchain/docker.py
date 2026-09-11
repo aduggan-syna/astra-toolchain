@@ -17,8 +17,16 @@ from astra_toolchain.naming import ToolchainSpec
 RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources")
 LABEL = "org.synaptics.astra.toolchain=1"
 NAME_PREFIX = "astra-"
-# The Astra toolchains are x86_64 Linux binaries.
+# The Astra toolchains are usually x86_64 Linux binaries, though custom builds
+# may target aarch64.
 TOOLCHAIN_PLATFORM = "linux/amd64"
+_ARCH_ALIASES = {"amd64": "x86_64", "arm64": "aarch64"}
+_ARCH_TO_PLATFORM = {"x86_64": "linux/amd64", "aarch64": "linux/arm64"}
+
+
+def _normalize_arch(arch: str) -> str:
+    arch = arch.lower()
+    return _ARCH_ALIASES.get(arch, arch)
 
 
 class DockerError(RuntimeError):
@@ -49,6 +57,14 @@ def image_exists(name: str) -> bool:
     return _run(["image", "inspect", name], capture=True).returncode == 0
 
 
+def image_arch(name: str) -> Optional[str]:
+    """Return the normalized architecture (e.g. "x86_64") an image was built for."""
+    result = _run(["image", "inspect", "--format", "{{.Architecture}}", name], capture=True)
+    if result.returncode != 0:
+        return None
+    return _normalize_arch(result.stdout.strip())
+
+
 def container_state(name: str) -> Optional[str]:
     result = _run(["container", "inspect", "--format", "{{.State.Status}}", name], capture=True)
     if result.returncode != 0:
@@ -61,11 +77,13 @@ def container_user() -> str:
     return name or "astra"
 
 
-def default_platform() -> Optional[str]:
-    """Emulate x86_64 on hosts that are not x86_64, such as Apple Silicon."""
-    if platform.machine().lower() in ("x86_64", "amd64"):
+def default_platform(toolchain_arch: Optional[str] = None) -> Optional[str]:
+    """Pick the docker platform for a toolchain, emulating when the host differs."""
+    host_arch = _normalize_arch(platform.machine())
+    arch = _normalize_arch(toolchain_arch or "x86_64")
+    if arch == host_arch:
         return None
-    return TOOLCHAIN_PLATFORM
+    return _ARCH_TO_PLATFORM.get(arch, TOOLCHAIN_PLATFORM)
 
 
 def build_image(

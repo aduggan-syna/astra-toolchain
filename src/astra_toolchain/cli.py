@@ -73,7 +73,7 @@ def cmd_build(args) -> int:
         name=name,
         base_image=args.base_image,
         no_cache=args.no_cache,
-        platform_name=args.platform or docker.default_platform(),
+        platform_name=args.platform or docker.default_platform(spec.host_arch),
     )
     print("Built {}".format(name))
     return 0
@@ -97,12 +97,8 @@ def _resolve_name(args) -> str:
 
 def cmd_run(args) -> int:
     name = _resolve_name(args)
-    return docker.run_shell(
-        name,
-        args.workdir,
-        args.command or None,
-        platform_name=args.platform or docker.default_platform(),
-    )
+    platform_name = args.platform or docker.default_platform(docker.image_arch(name))
+    return docker.run_shell(name, args.workdir, args.command or None, platform_name=platform_name)
 
 
 def cmd_list(args) -> int:

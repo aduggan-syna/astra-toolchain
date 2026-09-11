@@ -77,6 +77,8 @@ they have on the host. The user has passwordless `sudo` inside the container.
 - Set `GITHUB_TOKEN` if you hit GitHub API rate limits.
 - Large toolchains are published as split assets; the checksum published by the
   SDK release is verified after the parts are joined.
-- The toolchains are x86_64 Linux binaries. On non-x86_64 hosts (Apple Silicon)
-  the containers are built and run as `linux/amd64` under emulation; override
-  with `--platform`.
+- The published toolchains are x86_64 Linux binaries, so containers built and
+  run on non-x86_64 hosts (e.g. Apple Silicon) default to `linux/amd64` under
+  emulation. A custom toolchain built for aarch64 (its filename contains
+  `-poky-glibc-aarch64-`) is detected and run as `linux/arm64` instead, with no
+  emulation needed on an Apple Silicon Mac. Use `--platform` to override.
