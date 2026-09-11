@@ -62,6 +62,11 @@ RUN set -eux; \
     echo "${USER_NAME} ALL=(ALL) NOPASSWD:ALL" > "/etc/sudoers.d/${USER_NAME}"; \
     chmod 0440 "/etc/sudoers.d/${USER_NAME}"
 
+# Bind-mounted /workspace can report ownership that doesn't exactly match the
+# container user (notably over Docker Desktop's macOS file sharing), which
+# trips git's dubious-ownership check on every clone done during a build.
+RUN git config --system --add safe.directory '*'
+
 ARG TOOLCHAIN_INSTALLER
 ARG TOOLCHAIN_DIR=/opt/astra/toolchain
 COPY ${TOOLCHAIN_INSTALLER} /tmp/astra-toolchain-installer.sh
