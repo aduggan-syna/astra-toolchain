@@ -5,14 +5,13 @@ from __future__ import annotations
 import json
 import getpass
 import os
-import platform
 import re
 import shutil
 import subprocess
 import tempfile
 from typing import List, Optional
 
-from astra_toolchain.naming import ToolchainSpec
+from astra_toolchain.naming import ToolchainSpec, host_arch, normalize_arch
 
 RESOURCES = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources")
 LABEL = "org.synaptics.astra.toolchain=1"
@@ -20,13 +19,7 @@ NAME_PREFIX = "astra-"
 # The Astra toolchains are usually x86_64 Linux binaries, though custom builds
 # may target aarch64.
 TOOLCHAIN_PLATFORM = "linux/amd64"
-_ARCH_ALIASES = {"amd64": "x86_64", "arm64": "aarch64"}
 _ARCH_TO_PLATFORM = {"x86_64": "linux/amd64", "aarch64": "linux/arm64"}
-
-
-def _normalize_arch(arch: str) -> str:
-    arch = arch.lower()
-    return _ARCH_ALIASES.get(arch, arch)
 
 
 class DockerError(RuntimeError):
@@ -62,7 +55,7 @@ def image_arch(name: str) -> Optional[str]:
     result = _run(["image", "inspect", "--format", "{{.Architecture}}", name], capture=True)
     if result.returncode != 0:
         return None
-    return _normalize_arch(result.stdout.strip())
+    return normalize_arch(result.stdout.strip())
 
 
 def container_state(name: str) -> Optional[str]:
@@ -79,9 +72,8 @@ def container_user() -> str:
 
 def default_platform(toolchain_arch: Optional[str] = None) -> Optional[str]:
     """Pick the docker platform for a toolchain, emulating when the host differs."""
-    host_arch = _normalize_arch(platform.machine())
-    arch = _normalize_arch(toolchain_arch or "x86_64")
-    if arch == host_arch:
+    arch = normalize_arch(toolchain_arch or "x86_64")
+    if arch == host_arch():
         return None
     return _ARCH_TO_PLATFORM.get(arch, TOOLCHAIN_PLATFORM)
 

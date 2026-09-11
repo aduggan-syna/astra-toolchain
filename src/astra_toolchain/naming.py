@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import platform
 import re
 from dataclasses import dataclass
 from typing import Optional, Tuple
@@ -10,6 +11,19 @@ from typing import Optional, Tuple
 CODENAMES = ("scarthgap", "kirkstone", "nanbield", "mickledore", "langdale", "dunfell")
 
 DEFAULT_IMAGE = "default"
+
+_ARCH_ALIASES = {"amd64": "x86_64", "arm64": "aarch64"}
+
+
+def normalize_arch(arch: str) -> str:
+    """Map the various spellings of an architecture to a single canonical name."""
+    arch = arch.lower()
+    return _ARCH_ALIASES.get(arch, arch)
+
+
+def host_arch() -> str:
+    """The normalized architecture of the machine astra-toolchain is running on."""
+    return normalize_arch(platform.machine())
 
 # sl1680_oobe_scarthgap-poky-glibc-x86_64-astra-media-oobe-cortexa73-sl1680-toolchain-5.0.9.sh
 # Custom-built toolchains may instead target an aarch64 build host.
@@ -101,7 +115,7 @@ def parse_asset(name: str, release: Optional[str] = None) -> Optional[ToolchainS
             codename=codename,
             version=match.group("version"),
             installer=name,
-            host_arch=match.group("host_arch").replace("arm64", "aarch64"),
+            host_arch=normalize_arch(match.group("host_arch")),
         )
 
     match = _WRAPPER_RE.match(name)
@@ -121,8 +135,7 @@ def detect_host_arch(filename: str) -> Optional[str]:
     match = _ARCH_RE.search(filename)
     if not match:
         return None
-    arch = match.group("arch")
-    return "aarch64" if arch == "arm64" else arch
+    return normalize_arch(match.group("arch"))
 
 
 def detect_machine(filename: str) -> Optional[str]:

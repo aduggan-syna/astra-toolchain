@@ -13,7 +13,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
-from astra_toolchain.naming import ToolchainSpec, parse_asset
+from astra_toolchain.naming import ToolchainSpec, host_arch, parse_asset
 
 SDK_REPO = "synaptics-astra/sdk"
 GITHUB_API = "https://api.github.com/repos/{}/releases".format(SDK_REPO)
@@ -105,6 +105,7 @@ def toolchains_in_release(release: dict) -> Dict[Tuple[str, str], RemoteToolchai
     """Map (machine, image) to the best download candidate in a release."""
     found: Dict[Tuple[str, str], RemoteToolchain] = {}
     tag = release.get("tag_name")
+    local_arch = host_arch()
     for asset in release.get("assets", []):
         name = asset.get("name", "")
         spec = parse_asset(name, tag)
@@ -117,10 +118,20 @@ def toolchains_in_release(release: dict) -> Dict[Tuple[str, str], RemoteToolchai
         )
         key = (spec.machine, spec.image)
         previous = found.get(key)
-        # A direct installer is preferred over the split-file helper script.
-        if previous is None or (previous.is_wrapper and not candidate.is_wrapper):
+        if previous is None or _better_candidate(candidate, previous, local_arch):
             found[key] = candidate
     return found
+
+
+def _better_candidate(candidate: RemoteToolchain, previous: RemoteToolchain, local_arch: str) -> bool:
+    """True if ``candidate`` should replace ``previous`` for the same machine/image."""
+    # Prefer a toolchain built for this host's architecture, then a direct
+    # installer over the split-file helper script.
+    candidate_native = candidate.spec.host_arch == local_arch
+    previous_native = previous.spec.host_arch == local_arch
+    if candidate_native != previous_native:
+        return candidate_native
+    return previous.is_wrapper and not candidate.is_wrapper
 
 
 def find_toolchain(
