@@ -1,5 +1,11 @@
 #!/bin/bash
+# Copyright 2026 Synaptics Inc.
+#
+# Licensed under the Apache License v2.0
+# SPDX-License-Identifier: Apache-2.0
+
 # Source the Yocto SDK environment, then run the requested command.
+
 set -e
 
 args=("$@")

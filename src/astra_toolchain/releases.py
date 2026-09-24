@@ -1,3 +1,8 @@
+# Copyright 2026 Synaptics Inc.
+#
+# Licensed under the Apache License v2.0
+# SPDX-License-Identifier: Apache-2.0
+
 """Discovery and download of Astra SDK toolchains from GitHub releases."""
 
 from __future__ import annotations
